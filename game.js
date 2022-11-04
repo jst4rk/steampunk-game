@@ -132,7 +132,6 @@ window.addEventListener('load', function () {
     class Enemy {
         constructor(game) {
             this.game = game;
-
             this.xPosition = this.game.width;
             this.speed = Math.random() * -1.5 - 0.5;
 
@@ -142,8 +141,7 @@ window.addEventListener('load', function () {
         update() {
             this.xPosition += this.speed;
 
-            if (this.xPosition + this.width < 0) 
-            {
+            if (this.xPosition + this.width < 0) {
                 this.markForDeletion = true;
             }
         }
@@ -151,6 +149,9 @@ window.addEventListener('load', function () {
         draw(ctx) {
             ctx.fillStyle = 'red';
             ctx.fillRect(this.xPosition, this.yPosition, this.width, this.height);
+            ctx.fillStyle = 'black';
+            ctx.font = '20px Helvetica'
+            ctx.fillText(this.lives, this.xPosition, this.yPosition);
         }
     }
 
@@ -159,6 +160,8 @@ window.addEventListener('load', function () {
             super(game);
             this.width = 228 * 0.2;
             this.height = 160 * 0.2;
+            this.lives = 5;
+            this.score = this.lives;
             this.yPosition = Math.random() * ((this.game.height * 0.9) - this.height);
         }
     }
@@ -183,7 +186,7 @@ window.addEventListener('load', function () {
             ctx.fillStyle = this.fontColor;
 
             for (let index = 0; index < this.game.ammo; index++) {
-                ctx.fillRect(20 + 6 * index, 50, 3, 20);                
+                ctx.fillRect(20 + 6 * index, 50, 3, 20);
             }
         }
     }
@@ -200,6 +203,7 @@ window.addEventListener('load', function () {
             this.enemyInterval = 1000;
             this.enemies = [];
             this.maxEnemies = 25;
+            this.score = 0;
             this.gameOver = false;
 
             this.player = new Player(this);
@@ -221,6 +225,22 @@ window.addEventListener('load', function () {
 
             this.enemies.forEach(enemy => {
                 enemy.update();
+
+                if (this.checkCollision(this.player, enemy)) {
+                    enemy.markForDeletion = true;
+                }
+
+                this.player.projectiles.forEach(projectile => {
+                    if (this.checkCollision(projectile, enemy)) {
+                        enemy.lives--;
+                        projectile.markForDeletion = true;
+                        
+                        if (enemy.lives <= 0) {
+                            enemy.markForDeletion = true;
+                            this.score += enemy.score;
+                        }
+                    }
+                })
             });
 
             this.enemies = this.enemies.filter(enemy => !enemy.markForDeletion);
@@ -246,6 +266,15 @@ window.addEventListener('load', function () {
 
         addEnemy() {
             this.enemies.push(new Angler1(this));
+        }
+
+        checkCollision(rect1, rect2) {
+            return (
+                rect1.xPosition < rect2.xPosition + rect2.width &&
+                rect1.xPosition + rect1.width > rect2.xPosition &&
+                rect1.yPosition < rect2.yPosition + rect2.height &&
+                rect1.yPosition + rect1.height > rect2.yPosition
+            )
         }
     }
 
