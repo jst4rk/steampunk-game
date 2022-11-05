@@ -83,7 +83,7 @@ window.addEventListener('load', function () {
             this.height = 190;
 
             this.xPosition = 20;
-            this.yPosition = 100;
+            this.yPosition = 150;
 
             this.ySpeed = 0;
             this.maxSpeed = 3;
@@ -167,11 +167,49 @@ window.addEventListener('load', function () {
     }
 
     class Layer {
+        constructor(game, image, speedModifier) {
+            this.game = game;
+            this.image = image;
+            this.speedModifier = speedModifier;
+            this.width = 1768;
+            this.height = 500;
+            this.xPosition = 0;
+            this.yPosition = 0;
+        }
 
+        update() {
+            if (this.xPosition <= -this.width) {
+                this.xPosition = 0;
+            } else {
+                this.xPosition -= this.game.speed * this.speedModifier;
+            }
+        }
+
+        draw(ctx) {
+            ctx.drawImage(this.image, this.xPosition, this.yPosition);
+            ctx.drawImage(this.image, this.xPosition + this.width, this.yPosition);
+        }
     }
 
     class Background {
+        constructor(game) {
+            this.game = game;
 
+            this.layer1 = new Layer(this.game, document.getElementById('layer1'), 0.2);
+            this.layer2 = new Layer(this.game, document.getElementById('layer2'), 0.3);
+            this.layer3 = new Layer(this.game, document.getElementById('layer3'), 1);
+            this.layer4 = new Layer(this.game, document.getElementById('layer4'), 1.5);
+
+            this.layers = [this.layer1, this.layer2, this.layer3];
+        }
+
+        update() {
+            this.layers.forEach(layer => layer.update());
+        }
+
+        draw(ctx) {
+            this.layers.forEach(layer => layer.draw(ctx));
+        }
     }
 
     class UI {
@@ -236,14 +274,16 @@ window.addEventListener('load', function () {
             this.enemies = [];
             this.maxEnemies = 25;
             this.score = 0;
-            this.winningScore = 10;
+            this.winningScore = 1000;
             this.gameTime = 0;
-            this.timeLimit = 5000;
+            this.timeLimit = 60000;
+            this.speed = 1;
             this.gameOver = false;
 
             this.ui = new UI(this);
             this.player = new Player(this);
             this.input = new InputHandler(this);
+            this.background = new Background(this);
         }
 
         update(deltaTime) {
@@ -255,6 +295,8 @@ window.addEventListener('load', function () {
                 this.gameOver = true;
             }
 
+            this.background.update();
+            this.background.layer4.update();
             this.player.update(deltaTime);
             if (this.ammoTimer > this.ammoInterval) {
                 if (this.ammo < this.maxAmmo) {
@@ -301,15 +343,19 @@ window.addEventListener('load', function () {
             } else {
                 this.enemyTimer += deltaTime;
             }
+
         }
 
         draw(ctx) {
+            this.background.draw(ctx);
             this.player.draw(ctx);
-            this.ui.draw(ctx);
-
+            
             this.enemies.forEach(enemy => {
                 enemy.draw(ctx);
             });
+            this.ui.draw(ctx);
+            this.background.layer4.draw(ctx);
+
         }
 
         addEnemy() {
